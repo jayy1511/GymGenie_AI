@@ -31,13 +31,20 @@ app = FastAPI(
 )
 
 # CORS
+origins = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+]
+if settings.FRONTEND_URL:
+    # Support comma-separated origins
+    for url in settings.FRONTEND_URL.split(","):
+        url = url.strip().rstrip("/")
+        if url:
+            origins.append(url)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        settings.FRONTEND_URL,
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-    ],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
