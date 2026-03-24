@@ -1,0 +1,38 @@
+# Dependencies
+node_modules/
+__pycache__/
+*.pyc
+*.pyo
+
+# Environment variables
+.env
+.env.local
+.env.production.local
+
+# Build outputs
+.next/
+out/
+dist/
+build/
+
+# ML artifacts (large binary files — keep in releases or use Git LFS)
+# Uncomment the line below if artifacts are too large for GitHub
+# ml/artifacts/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Python
+*.egg-info/
+*.egg
+venv/
+env/
+
+# Logs
+*.log
+npm-debug.log*
