@@ -1,10 +1,10 @@
 """
 GymGenie AI — Gemini AI Service
 Handles prompt construction, profile-aware context, and Gemini API calls.
-Uses the modern google-genai SDK.
+Uses direct REST API calls for reliable deployment on constrained platforms.
 """
-from google import genai
-from google.genai import types
+import httpx
+import json
 from typing import Optional, List
 from app.core.config import settings
 
@@ -70,6 +70,45 @@ def build_exercise_context(exercises: List[dict]) -> str:
     return "\n".join(parts)
 
 
+GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
+
+
+async def _call_gemini(model: str, system: str, contents: list) -> str:
+    """Call Gemini REST API directly with httpx."""
+    url = GEMINI_API_URL.format(model=model)
+
+    body = {
+        "system_instruction": {
+            "parts": [{"text": system}]
+        },
+        "contents": contents,
+        "generationConfig": {
+            "temperature": 0.7,
+            "maxOutputTokens": 8192,
+        },
+    }
+
+    async with httpx.AsyncClient(timeout=90.0) as client:
+        response = await client.post(
+            url,
+            params={"key": settings.GEMINI_API_KEY},
+            json=body,
+            headers={"Content-Type": "application/json"},
+        )
+
+    if response.status_code != 200:
+        error_detail = response.text[:300]
+        raise Exception(f"Gemini API {response.status_code}: {error_detail}")
+
+    data = response.json()
+    candidates = data.get("candidates", [])
+    if not candidates:
+        raise Exception(f"No candidates in Gemini response: {json.dumps(data)[:300]}")
+
+    parts = candidates[0].get("content", {}).get("parts", [])
+    return "".join(p.get("text", "") for p in parts)
+
+
 async def generate_response(
     user_message: str,
     chat_history: List[dict] = None,
@@ -79,19 +118,17 @@ async def generate_response(
     """Generate a fitness-focused AI response using Gemini."""
     if not settings.GEMINI_API_KEY:
         return (
-            "⚠️ AI service is not configured. Please set the GEMINI_API_KEY "
+            "AI service is not configured. Please set the GEMINI_API_KEY "
             "environment variable to enable the AI assistant."
         )
 
     try:
-        client = genai.Client(api_key=settings.GEMINI_API_KEY)
-
         # Build full system instruction
         full_system = SYSTEM_PROMPT
         full_system += build_user_context(user_profile)
         full_system += build_exercise_context(relevant_exercises)
 
-        # Build conversation history
+        # Build conversation history for Gemini API format
         contents = []
 
         # Add recent chat history (last 10 messages)
@@ -99,55 +136,31 @@ async def generate_response(
             recent = chat_history[-10:]
             for msg in recent:
                 role = "user" if msg["role"] == "user" else "model"
-                contents.append(
-                    types.Content(
-                        role=role,
-                        parts=[types.Part.from_text(text=msg["content"])]
-                    )
-                )
+                contents.append({
+                    "role": role,
+                    "parts": [{"text": msg["content"]}]
+                })
 
         # Add current user message
-        contents.append(
-            types.Content(
-                role="user",
-                parts=[types.Part.from_text(text=user_message)]
-            )
-        )
+        contents.append({
+            "role": "user",
+            "parts": [{"text": user_message}]
+        })
 
-        # Generate response with system instruction
-        response = client.models.generate_content(
-            model="gemini-2.5-flash",
-            contents=contents,
-            config=types.GenerateContentConfig(
-                system_instruction=full_system,
-                temperature=0.7,
-                max_output_tokens=8192,
-            ),
-        )
-
-        return response.text
+        # Try gemini-2.0-flash first (most reliable)
+        return await _call_gemini("gemini-2.0-flash", full_system, contents)
 
     except Exception as e:
-        error_msg = str(e)
-        print(f"Gemini API error ({type(e).__name__}): {error_msg}")
+        print(f"Gemini API error ({type(e).__name__}): {e}")
 
-        # Retry with fallback model
+        # Retry with a different model
         try:
-            print("Retrying with gemini-2.0-flash...")
-            client = genai.Client(api_key=settings.GEMINI_API_KEY)
-            response = client.models.generate_content(
-                model="gemini-2.0-flash",
-                contents=contents,
-                config=types.GenerateContentConfig(
-                    system_instruction=full_system,
-                    temperature=0.7,
-                    max_output_tokens=8192,
-                ),
-            )
-            return response.text
+            print("Retrying with gemini-1.5-flash...")
+            return await _call_gemini("gemini-1.5-flash", full_system, contents)
         except Exception as e2:
             print(f"Fallback also failed ({type(e2).__name__}): {e2}")
             return (
                 "I'm sorry, I'm having trouble processing your request right now. "
                 "Please try again in a moment. If the issue persists, check the API configuration."
             )
+

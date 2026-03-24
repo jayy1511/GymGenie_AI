@@ -8,6 +8,7 @@ python-dotenv
 pydantic[email]
 pydantic-settings
 google-genai
+httpx
 pandas
 numpy
 scikit-learn
