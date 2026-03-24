@@ -128,8 +128,26 @@ async def generate_response(
         return response.text
 
     except Exception as e:
-        print(f"Gemini API error: {e}")
-        return (
-            "I'm sorry, I'm having trouble processing your request right now. "
-            "Please try again in a moment. If the issue persists, check the API configuration."
-        )
+        error_msg = str(e)
+        print(f"Gemini API error ({type(e).__name__}): {error_msg}")
+
+        # Retry with fallback model
+        try:
+            print("Retrying with gemini-2.0-flash...")
+            client = genai.Client(api_key=settings.GEMINI_API_KEY)
+            response = client.models.generate_content(
+                model="gemini-2.0-flash",
+                contents=contents,
+                config=types.GenerateContentConfig(
+                    system_instruction=full_system,
+                    temperature=0.7,
+                    max_output_tokens=8192,
+                ),
+            )
+            return response.text
+        except Exception as e2:
+            print(f"Fallback also failed ({type(e2).__name__}): {e2}")
+            return (
+                "I'm sorry, I'm having trouble processing your request right now. "
+                "Please try again in a moment. If the issue persists, check the API configuration."
+            )
