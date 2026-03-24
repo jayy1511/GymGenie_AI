@@ -147,16 +147,16 @@ async def generate_response(
             "parts": [{"text": user_message}]
         })
 
-        # Try gemini-2.0-flash first (most reliable)
-        return await _call_gemini("gemini-2.0-flash", full_system, contents)
+        # Try gemini-2.5-flash first
+        return await _call_gemini("gemini-2.5-flash", full_system, contents)
 
     except Exception as e:
         print(f"Gemini API error ({type(e).__name__}): {e}")
 
         # Retry with a different model
         try:
-            print("Retrying with gemini-1.5-flash...")
-            return await _call_gemini("gemini-1.5-flash", full_system, contents)
+            print("Retrying with gemini-2.0-flash...")
+            return await _call_gemini("gemini-2.0-flash", full_system, contents)
         except Exception as e2:
             print(f"Fallback also failed ({type(e2).__name__}): {e2}")
             return (
