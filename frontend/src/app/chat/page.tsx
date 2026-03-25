@@ -116,12 +116,12 @@ function ChatContent() {
             ) : (
               <div className="space-y-0.5">
                 {sessions.map((s) => (
-                  <button key={s.id} onClick={() => loadSession(s.id)} className={`group flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-sm transition-colors hover:bg-accent ${currentSessionId === s.id ? "bg-accent font-medium" : ""}`}>
+                  <div key={s.id} onClick={() => loadSession(s.id)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') loadSession(s.id); }} className={`group flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-sm transition-colors hover:bg-accent cursor-pointer ${currentSessionId === s.id ? "bg-accent font-medium" : ""}`}>
                     <span className="truncate pr-4">{s.title}</span>
-                    <button onClick={(e) => handleDeleteSession(s.id, e)} className="shrink-0 opacity-0 transition-opacity group-hover:opacity-100" title="Delete">
+                    <button onClick={(e) => handleDeleteSession(s.id, e)} className="shrink-0 opacity-0 transition-opacity group-hover:opacity-100" title="Delete" aria-label="Delete session">
                       <Trash2 className="h-3.5 w-3.5 text-muted-foreground hover:text-destructive" />
                     </button>
-                  </button>
+                  </div>
                 ))}
               </div>
             )}
@@ -238,9 +238,9 @@ function ChatContent() {
               </div>
               <ScrollArea className="flex-1 px-2 py-2">
                 {sessions.map((s) => (
-                  <button key={s.id} onClick={() => { loadSession(s.id); setSidebarOpen(false); }} className={`group flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-sm transition-colors hover:bg-accent ${currentSessionId === s.id ? "bg-accent font-medium" : ""}`}>
+                  <div key={s.id} onClick={() => { loadSession(s.id); setSidebarOpen(false); }} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { loadSession(s.id); setSidebarOpen(false); } }} className={`group flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-sm transition-colors hover:bg-accent cursor-pointer ${currentSessionId === s.id ? "bg-accent font-medium" : ""}`}>
                     <span className="truncate pr-4">{s.title}</span>
-                  </button>
+                  </div>
                 ))}
               </ScrollArea>
             </div>

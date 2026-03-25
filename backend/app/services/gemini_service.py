@@ -56,11 +56,15 @@ def build_exercise_context(exercises: List[dict]) -> str:
 
     parts = ["\n--- Relevant Exercises from Database ---"]
     for i, ex in enumerate(exercises[:8], 1):
-        parts.append(
-            f"{i}. **{ex['title']}** | {ex['body_part']} | {ex['equipment']} | {ex['level']}"
-        )
-        if ex.get("description"):
-            parts.append(f"   {ex['description'][:150]}")
+        title = ex.get('title', 'Unknown Exercise')
+        body_part = ex.get('body_part', 'Unknown')
+        equipment = ex.get('equipment', 'Unknown')
+        level = ex.get('level', 'Unknown')
+        parts.append(f"{i}. **{title}** | {body_part} | {equipment} | {level}")
+        
+        description = ex.get('description', '')
+        if description:
+            parts.append(f"   {description[:150]}")
     parts.append("--- End Exercises ---\n")
     parts.append(
         "Use the above exercise data to inform your response when relevant. "
@@ -98,13 +102,15 @@ async def generate_response(
         if chat_history:
             recent = chat_history[-10:]
             for msg in recent:
-                role = "user" if msg["role"] == "user" else "model"
-                contents.append(
-                    types.Content(
-                        role=role,
-                        parts=[types.Part.from_text(text=msg["content"])]
+                role = "user" if msg.get("role") == "user" else "model"
+                content_text = msg.get("content", "")
+                if content_text:
+                    contents.append(
+                        types.Content(
+                            role=role,
+                            parts=[types.Part.from_text(text=content_text)]
+                        )
                     )
-                )
 
         # Add current user message
         contents.append(
@@ -114,9 +120,10 @@ async def generate_response(
             )
         )
 
-        # Generate response with system instruction
-        response = client.models.generate_content(
-            model="gemini-3.1-flash-lite-preview",
+        # Generate response asynchronously
+        model_name = getattr(settings, 'GEMINI_MODEL', 'gemini-2.5-flash')
+        response = await client.aio.models.generate_content(
+            model=model_name,
             contents=contents,
             config=types.GenerateContentConfig(
                 system_instruction=full_system,
@@ -128,8 +135,9 @@ async def generate_response(
         return response.text
 
     except Exception as e:
-        print(f"Gemini API error: {e}")
+        import logging
+        logging.error(f"Gemini API error: {e}", exc_info=True)
         return (
             "I'm sorry, I'm having trouble processing your request right now. "
-            "Please try again in a moment. If the issue persists, check the API configuration."
+            "Please try again in a moment."
         )

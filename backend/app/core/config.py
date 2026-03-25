@@ -17,6 +17,7 @@ class Settings(BaseSettings):
 
     # Gemini
     GEMINI_API_KEY: str = ""
+    GEMINI_MODEL: str = "gemini-2.5-flash"
 
     # CORS
     FRONTEND_URL: str = "http://localhost:3000"
