@@ -98,7 +98,7 @@ function ChatContent() {
   if (authLoading || !user) return <div className="flex h-[calc(100vh-3.5rem)] items-center justify-center"><Loader2 className="h-6 w-6 animate-spin" /></div>;
 
   return (
-    <div className="flex h-[calc(100vh-3.5rem)]">
+    <div className="flex h-[calc(100vh-3.5rem)] w-full">
       {/* Sidebar */}
       <div className={`${sidebarOpen ? "w-72" : "w-0"} shrink-0 overflow-hidden border-r bg-card transition-all duration-200 hidden md:block`}>
         <div className="flex h-full w-72 flex-col">
@@ -108,7 +108,7 @@ function ChatContent() {
               <Plus className="h-3.5 w-3.5" /> New
             </Button>
           </div>
-          <ScrollArea className="flex-1 px-2 py-2">
+          <ScrollArea className="flex-1 min-h-0 px-2 py-2">
             {sessionsLoading ? (
               <div className="space-y-2 px-2">{[1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-12" />)}</div>
             ) : sessions.length === 0 ? (
@@ -130,7 +130,7 @@ function ChatContent() {
       </div>
 
       {/* Main chat */}
-      <div className="flex flex-1 flex-col">
+      <div className="flex flex-1 flex-col min-w-0 min-h-0">
         {/* Top bar */}
         <div className="flex items-center gap-2 border-b px-4 py-2.5">
           <Button variant="ghost" size="icon" className="h-8 w-8 hidden md:inline-flex" onClick={() => setSidebarOpen(!sidebarOpen)}>
@@ -145,7 +145,7 @@ function ChatContent() {
         </div>
 
         {/* Messages area */}
-        <ScrollArea className="flex-1">
+        <ScrollArea className="flex-1 min-h-0">
           <div className="mx-auto max-w-3xl px-6 py-8">
             {messagesLoading ? (
               <div className="space-y-6">{[1, 2, 3].map((i) => <Skeleton key={i} className="h-20" />)}</div>
@@ -236,7 +236,7 @@ function ChatContent() {
                   <Plus className="h-3.5 w-3.5" /> New
                 </Button>
               </div>
-              <ScrollArea className="flex-1 px-2 py-2">
+              <ScrollArea className="flex-1 min-h-0 px-2 py-2">
                 {sessions.map((s) => (
                   <div key={s.id} onClick={() => { loadSession(s.id); setSidebarOpen(false); }} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { loadSession(s.id); setSidebarOpen(false); } }} className={`group flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-sm transition-colors hover:bg-accent cursor-pointer ${currentSessionId === s.id ? "bg-accent font-medium" : ""}`}>
                     <span className="truncate pr-4">{s.title}</span>
