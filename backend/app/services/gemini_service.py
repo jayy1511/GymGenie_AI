@@ -88,7 +88,17 @@ async def generate_response(
         )
 
     try:
+        import logging
+        logging.info("=== GEMINI DEPLOYMENT DEBUG ===")
+        logging.info(f"API Key present: {bool(settings.GEMINI_API_KEY)}")
+        if settings.GEMINI_API_KEY:
+            logging.info(f"API Key Length: {len(settings.GEMINI_API_KEY)}")
+        
+        model_name = getattr(settings, 'GEMINI_MODEL', 'gemini-2.5-flash')
+        logging.info(f"Using model: {model_name}")
+        
         client = genai.Client(api_key=settings.GEMINI_API_KEY)
+        logging.info("Client initialized successfully.")
 
         # Build full system instruction
         full_system = SYSTEM_PROMPT
@@ -136,8 +146,12 @@ async def generate_response(
 
     except Exception as e:
         import logging
-        logging.error(f"Gemini API error: {e}", exc_info=True)
+        import traceback
+        logging.error("=== GEMINI DEPLOYMENT EXCEPTION ===")
+        logging.error(f"Error Type: {type(e).__name__}")
+        logging.error(f"Error Message: {str(e)}")
+        logging.error(traceback.format_exc())
         return (
             "I'm sorry, I'm having trouble processing your request right now. "
-            "Please try again in a moment."
+            f"[DEBUG: {type(e).__name__} - {str(e)}]"
         )
