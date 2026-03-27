@@ -153,5 +153,5 @@ async def generate_response(
         logging.error(traceback.format_exc())
         return (
             "I'm sorry, I'm having trouble processing your request right now. "
-            f"[DEBUG: {type(e).__name__} - {str(e)}]"
+            "Please try again in a moment."
         )

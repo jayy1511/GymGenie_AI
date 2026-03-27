@@ -34,12 +34,13 @@ app = FastAPI(
 origins = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
+    "https://gym-genie-ai.vercel.app",
 ]
-if settings.FRONTEND_URL:
+if getattr(settings, "FRONTEND_URL", None):
     # Support comma-separated origins
     for url in settings.FRONTEND_URL.split(","):
         url = url.strip().rstrip("/")
-        if url:
+        if url and url not in origins:
             origins.append(url)
 
 app.add_middleware(
